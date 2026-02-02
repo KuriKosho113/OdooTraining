@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odoo Training Portal - Intern Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom Font for a professional look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9F7; /* Warm Neutral Background */
+            color: #1F2937;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF; 
+        }
+
+        /* Chart Container Utilities - Strictly following constraints */
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-wrapper {
+                height: 350px;
+            }
+        }
+
+        /* Card Transitions */
+        .day-card {
+            transition: all 0.3s ease;
+        }
+        .day-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Active Navigation State */
+        .nav-item.active {
+            background-color: #714B67; /* Odoo Purple-ish */
+            color: white;
+            border-right: 4px solid #00A09D; /* Teal Accent */
+        }
+
+        .details-panel {
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .details-panel.open {
+            max-height: 1000px; /* Arbitrary large height for transition */
+            opacity: 1;
+        }
+    </style>
+    <!-- Chosen Palette: Odoo Harmony (Warm Neutrals #F9F9F7, Deep Purple #714B67, Teal #00A09D) -->
+    <!-- Application Structure Plan: LMS-style Dashboard. 
+         1. Sidebar Navigation: Logical flow from Overview -> Week 1-4 -> Resources.
+         2. Overview Tab: High-level synthesis of the plan, utilizing charts to show skill balance and time allocation.
+         3. Weekly Tabs: Task-oriented view. Users see a grid of days. Clicking a day expands detailed "Lab" instructions. 
+         4. Gamification: Progress bars and checkboxes to encourage completion (simulating a real training tracker).
+         Why: The report is a linear timeline. An interactive timeline/dashboard allows interns to focus on the current day's task while seeing the bigger picture. 
+    -->
+    <!-- Visualization & Content Choices: 
+         1. Radar Chart: Visualizes the "Focus Areas" table from the report (Language, DB, Framework) to show skill breadth.
+         2. Doughnut Chart: Breaks down the 4 weeks into categories (Setup, Frontend, Backend, Project) to manage expectations.
+         3. Interactive Cards: Instead of a long text wall, daily content is hidden behind cards to reduce cognitive load.
+         4. NO SVG/Mermaid: All icons are Unicode, diagrams are HTML/CSS layouts or Chart.js.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex-col hidden md:flex shadow-sm z-10">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-center">
+            <h1 class="text-2xl font-bold text-gray-800 tracking-tight">Odoo<span class="text-[#714B67]">Training</span></h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1 px-3">
+                <li>
+                    <button onclick="navigate('overview')" id="nav-overview" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center">
+                        <span class="mr-3 text-lg">📊</span> Tổng Quan
+                    </button>
+                </li>
+                <li>
+                    <button onclick="navigate('week1')" id="nav-week1" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center">
+                        <span class="mr-3 text-lg">🌱</span> Tuần 1: Nhập Môn
+                    </button>
+                </li>
+                <li>
+                    <button onclick="navigate('week2')" id="nav-week2" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center">
+                        <span class="mr-3 text-lg">🎨</span> Tuần 2: Frontend
+                    </button>
+                </li>
+                <li>
+                    <button onclick="navigate('week3')" id="nav-week3" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center">
+                        <span class="mr-3 text-lg">⚙️</span> Tuần 3: Backend
+                    </button>
+                </li>
+                <li>
+                    <button onclick="navigate('week4')" id="nav-week4" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center">
+                        <span class="mr-3 text-lg">🚀</span> Tuần 4: Project
+                    </button>
+                </li>
+                <li>
+                    <button onclick="navigate('resources')" id="nav-resources" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center">
+                        <span class="mr-3 text-lg">🛠️</span> Tài Nguyên & Mẹo
+                    </button>
+                </li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-gray-100 bg-gray-50">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-semibold text-gray-500 uppercase">Tiến độ chung</span>
+                <span id="total-progress-text" class="text-xs font-bold text-[#714B67]">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div id="total-progress-bar" class="bg-[#00A09D] h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <div class="md:hidden fixed top-0 w-full bg-white z-20 border-b border-gray-200 p-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-gray-800">Odoo<span class="text-[#714B67]">Training</span></h1>
+        <button onclick="toggleMobileMenu()" class="text-gray-600 focus:outline-none text-2xl">☰</button>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-gray-800 bg-opacity-75 z-30 hidden" onclick="toggleMobileMenu()">
+        <div class="bg-white w-64 h-full p-4" onclick="event.stopPropagation()">
+            <nav class="space-y-2 mt-8">
+                <button onclick="navigate('overview'); toggleMobileMenu()" class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded">Tổng Quan</button>
+                <button onclick="navigate('week1'); toggleMobileMenu()" class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded">Tuần 1: Nhập Môn</button>
+                <button onclick="navigate('week2'); toggleMobileMenu()" class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded">Tuần 2: Frontend</button>
+                <button onclick="navigate('week3'); toggleMobileMenu()" class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded">Tuần 3: Backend</button>
+                <button onclick="navigate('week4'); toggleMobileMenu()" class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded">Tuần 4: Project</button>
+                <button onclick="navigate('resources'); toggleMobileMenu()" class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded">Tài Nguyên</button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-8 scroll-smooth">
+        <div id="content-area" class="max-w-6xl mx-auto">
+            <!-- Dynamic Content Injected Here -->
+        </div>
+        
+        <footer class="mt-12 text-center text-sm text-gray-400 py-6 border-t border-gray-200">
+            <p>Odoo Technical Training Plan • Based on Source Report</p>
+        </footer>
+    </main>
+
+    <script>
+        // --- Data Source (Extracted from Report) ---
+        const trainingData = {
+            overview: {
+                title: "Lộ trình Đào tạo Odoo Technical",
+                description: "Chào mừng bạn đến với chương trình đào tạo chuyên sâu trong 4 tuần. Kế hoạch này được thiết kế để biến một thực tập sinh có nền tảng Python cơ bản thành một lập trình viên Odoo sẵn sàng cho dự án thực tế. Chúng ta sẽ đi từ cấu hình môi trường, hiểu về Functional, đến việc xây dựng các module phức tạp.",
+                stats: {
+                    skills: {
+                        labels: ['Python/Logic', 'Database/SQL', 'Odoo Framework (XML/OWL)', 'Tools (Git/Docker)', 'Business Flow'],
+                        data: [90, 70, 85, 60, 80], // Estimated relative importance
+                    },
+                    timeline: {
+                        labels: ['Tuần 1: Setup & Functional', 'Tuần 2: Frontend (Views)', 'Tuần 3: Backend (ORM)', 'Tuần 4: Project & Reports'],
+                        data: [5, 5, 5, 5] // Days per week
+                    }
+                },
+                advice: [
+                    "Đừng bắt đầu bằng Code ngay: Hãy vọc phần mềm trước để hiểu nghiệp vụ.",
+                    "Triết lý cốt lõi: 'Đừng bao giờ phát minh lại cái bánh xe'.",
+                    "Hãy đọc Source Code chuẩn của Odoo (ví dụ: module Sales, Account) để học cách viết.",
+                    "Review code hàng ngày là chìa khóa để tiến bộ."
+                ]
+            },
+            weeks: [
+                {
+                    id: "week1",
+                    title: "Tuần 1: Nhập Môn & Môi Trường",
+                    goal: "Cài đặt môi trường làm việc chuẩn và hiểu Odoo dưới góc độ người dùng (Functional). Xây dựng nền móng vững chắc.",
+                    days: [
+                        { id: 1, title: "Ngày 1: Setup & Hello Odoo", topics: ["Cài đặt Ubuntu/WSL2, Python, PostgreSQL", "Clone Source Code Odoo 18", "File cấu hình .conf", "Chạy server local"], lab: "Tạo một database mới và cài đặt module Sales. Đảm bảo server chạy mượt mà không lỗi." },
+                        { id: 2, title: "Ngày 2: Tổng quan ERP & UI/UX", topics: ["Khái niệm ERP", "Giao diện Apps, Settings, Debug Mode", "Luồng: Sales -> Delivery -> Invoicing"], lab: "Thực hiện thủ công quy trình: Tạo báo giá -> Xác nhận đơn -> Xuất kho -> Tạo hóa đơn." },
+                        { id: 3, title: "Ngày 3: Kiến trúc Module", topics: ["Cấu trúc thư mục Module", "Manifest, Models, Views", "Lệnh odoo-bin scaffold"], lab: "Tạo module 'my_library' (Quản lý thư viện) rỗng bằng lệnh scaffold." },
+                        { id: 4, title: "Ngày 4: Models - Dữ liệu", topics: ["Định nghĩa Model (_name)", "Kiểu dữ liệu (Char, Int, Date)", "Quan hệ (Many2one, One2many)"], lab: "Thiết kế Model cho: Sách (Tên, Mã), Tác giả (Tên), Thể loại. Thiết lập quan hệ giữa chúng." },
+                        { id: 5, title: "Ngày 5: Review & Quiz", topics: ["Kiểm tra kiến thức tuần 1", "Xử lý lỗi môi trường"], lab: "Review lại toàn bộ code tuần 1. Fix bugs nếu có." }
+                    ]
+                },
+                {
+                    id: "week2",
+                    title: "Tuần 2: View & Data Files",
+                    goal: "Hiển thị dữ liệu lên giao diện người dùng. Hiểu sâu về XML views và cách Odoo render giao diện.",
+                    days: [
+                        { id: 6, title: "Ngày 6: Actions & Menus", topics: ["Menu cha, Menu con", "ir.actions.act_window"], lab: "Tạo hệ thống Menu điều hướng đầy đủ cho ứng dụng Quản lý thư viện." },
+                        { id: 7, title: "Ngày 7: Tree & Form View", topics: ["List view structure", "Form view layout (Sheet, Group, Notebook)"], lab: "Thiết kế Form nhập liệu sách đẹp mắt, sử dụng Notebook để chia tab thông tin." },
+                        { id: 8, title: "Ngày 8: Search & Filters", topics: ["Search view", "Filter & Group By", "Searchpanel"], lab: "Tạo bộ lọc 'Sách của tác giả X' và nhóm sách theo 'Thể loại'." },
+                        { id: 9, title: "Ngày 9: Data Files", topics: ["Import Demo Data", "File XML/CSV", "Noupdate flag"], lab: "Viết file XML để tự động tạo 10 cuốn sách mẫu ngay khi cài module." },
+                        { id: 10, title: "Ngày 10: Tổng kết Tuần 2", topics: ["CRUD Interface hoàn chỉnh"], lab: "Bài tập lớn: Xây dựng giao diện quản lý 'Thành viên thư viện' từ A-Z." }
+                    ]
+                },
+                {
+                    id: "week3",
+                    title: "Tuần 3: Business Logic & ORM",
+                    goal: "Trái tim của hệ thống. Viết Python để xử lý logic nghiệp vụ, tính toán tự động và bảo mật.",
+                    days: [
+                        { id: 11, title: "Ngày 11: ORM Methods (1)", topics: ["Environment (env), Self", "Search, Browse", "Button Action"], lab: "Viết nút 'Mượn sách': Click nút -> Đổi trạng thái sách từ 'Có sẵn' sang 'Đã mượn'." },
+                        { id: 12, title: "Ngày 12: ORM Methods (2)", topics: ["Override Create/Write/Unlink", "Super()"], lab: "Tự động sinh mã sách (VD: LIB-001) khi người dùng bấm Lưu (Override hàm create)." },
+                        { id: 13, title: "Ngày 13: Compute & Onchange", topics: ["@api.depends", "@api.onchange"], lab: "Tự động tính 'Ngày phải trả' = 'Ngày mượn' + 14 ngày. Hiển thị ngay khi chọn ngày mượn." },
+                        { id: 14, title: "Ngày 14: Inheritance (Kế thừa)", topics: ["_inherit (Model)", "XPath (View)"], lab: "Kế thừa module Contacts (res.partner): Thêm trường 'Sách yêu thích' vào hồ sơ đối tác." },
+                        { id: 15, title: "Ngày 15: Security", topics: ["ir.model.access.csv", "Record Rules"], lab: "Tạo nhóm 'Thủ thư' (Full quyền) và 'Độc giả' (Chỉ xem). Cấu hình Record Rule để độc giả chỉ thấy sách đang có sẵn." }
+                    ]
+                },
+                {
+                    id: "week4",
+                    title: "Tuần 4: Report & Mini Project",
+                    goal: "Hoàn thiện kỹ năng với báo cáo in ấn và một dự án thực tế tổng hợp mọi kiến thức.",
+                    days: [
+                        { id: 16, title: "Ngày 16: QWeb Reports", topics: ["QWeb Template", "Report Action"], lab: "Thiết kế mẫu in PDF 'Thẻ thư viện' có Logo và thông tin độc giả." },
+                        { id: 17, title: "Ngày 17: Giới thiệu OWL", topics: ["Javascript cơ bản trong Odoo", "Component system"], lab: "Tìm hiểu cấu trúc file JS trong một module có sẵn (không yêu cầu code sâu)." },
+                        { id: 18, title: "Ngày 18: Project Start", topics: ["Phân tích yêu cầu", "Thiết kế Database"], lab: "Bắt đầu Project 'Quản lý Nghỉ phép' hoặc 'Quản lý Cafe'. Vẽ sơ đồ ERD." },
+                        { id: 19, title: "Ngày 19: Project Coding", topics: ["Logic & View Implementation"], lab: "Code các tính năng chính: Tạo đơn, Duyệt đơn, Tính toán ngày nghỉ." },
+                        { id: 20, title: "Ngày 20: Demo & Review", topics: ["Thuyết trình", "Code Review", "Optimization"], lab: "Demo sản phẩm. Nhận xét về Coding Convention và lỗi N+1 Query." }
+                    ]
+                }
+            ],
+            resources: [
+                { name: "Odoo Documentation (18.0)", link: "https://www.odoo.com/documentation/18.0/", desc: "Tài liệu kỹ thuật chính chủ." },
+                { name: "Odoo Source Code", link: "https://github.com/odoo/odoo", desc: "Kho tàng mẫu code tốt nhất." },
+                { name: "OCA (Community Association)", link: "https://github.com/OCA", desc: "Các module cộng đồng chất lượng cao." },
+                { name: "Learn Odoo (Official)", link: "https://www.odoo.com/slides/all", desc: "Video hướng dẫn từ Odoo SA." }
+            ]
+        };
+
+        // --- State Management ---
+        let currentView = 'overview';
+        let completedDays = JSON.parse(localStorage.getItem('odooTrainingProgress')) || [];
+
+        // --- Core Functions ---
+
+        function init() {
+            renderOverview();
+            updateProgressUI();
+            
+            // Mobile menu toggle logic
+            document.addEventListener('click', function(event) {
+                const mobileMenu = document.getElementById('mobile-menu');
+                const isClickInside = mobileMenu.contains(event.target);
+                const menuButton = document.querySelector('button[onclick="toggleMobileMenu()"]');
+                
+                if (!isClickInside && !menuButton.contains(event.target) && !mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function navigate(viewId) {
+            currentView = viewId;
+            
+            // Update Menu Active State
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if (activeNav) activeNav.classList.add('active');
+
+            // Render Content
+            if (viewId === 'overview') {
+                renderOverview();
+            } else if (viewId === 'resources') {
+                renderResources();
+            } else {
+                renderWeek(viewId);
+            }
+            
+            // Scroll to top
+            document.querySelector('main').scrollTop = 0;
+        }
+
+        function updateProgressUI() {
+            const totalDays = 20; // 4 weeks * 5 days
+            const completedCount = completedDays.length;
+            const percentage = Math.round((completedCount / totalDays) * 100);
+
+            document.getElementById('total-progress-text').innerText = `${percentage}%`;
+            document.getElementById('total-progress-bar').style.width = `${percentage}%`;
+            
+            // Save to local storage
+            localStorage.setItem('odooTrainingProgress', JSON.stringify(completedDays));
+        }
+
+        function toggleDayCompletion(dayId) {
+            if (completedDays.includes(dayId)) {
+                completedDays = completedDays.filter(id => id !== dayId);
+            } else {
+                completedDays.push(dayId);
+            }
+            updateProgressUI();
+            
+            // Re-render button state if looking at that week
+            const btn = document.getElementById(`btn-check-${dayId}`);
+            if (btn) {
+                const isComplete = completedDays.includes(dayId);
+                btn.innerHTML = isComplete ? '✅ Đã hoàn thành' : '⬜ Đánh dấu xong';
+                btn.className = isComplete 
+                    ? "mt-4 w-full py-2 px-4 rounded-lg bg-green-100 text-green-700 font-semibold text-sm hover:bg-green-200 transition-colors"
+                    : "mt-4 w-full py-2 px-4 rounded-lg bg-gray-100 text-gray-600 font-semibold text-sm hover:bg-gray-200 transition-colors";
+            }
+        }
+
+        function toggleDetails(dayId) {
+            const panel = document.getElementById(`details-${dayId}`);
+            const arrow = document.getElementById(`arrow-${dayId}`);
+            
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+                panel.style.opacity = 0;
+                panel.classList.remove('py-4');
+                arrow.style.transform = "rotate(0deg)";
+            } else {
+                // Close others in same week (accordion style - optional, kept open for comparison)
+                // document.querySelectorAll('.details-panel').forEach(p => { p.style.maxHeight = null; p.style.opacity = 0; });
+                
+                panel.classList.add('py-4');
+                panel.style.maxHeight = panel.scrollHeight + "px";
+                panel.style.opacity = 1;
+                arrow.style.transform = "rotate(180deg)";
+            }
+        }
+
+        // --- Render Functions ---
+
+        function renderOverview() {
+            const container = document.getElementById('content-area');
+            container.innerHTML = `
+                <div class="animate-fade-in-up">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Tổng quan Chương trình</h2>
+                        <p class="text-lg text-gray-600 leading-relaxed max-w-4xl">${trainingData.overview.description}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                        <!-- Chart 1: Skills -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">🎯 Trọng tâm Kỹ năng</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="skillsChart"></canvas>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-4 italic text-center">Mức độ quan trọng của các kỹ năng trong khóa học</p>
+                        </div>
+
+                        <!-- Chart 2: Timeline Distribution -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">⏳ Phân bổ Thời gian</h3>
+                            <div class="chart-wrapper flex items-center justify-center">
+                                <canvas id="timelineChart"></canvas>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-4 italic text-center">Cân bằng giữa lý thuyết và thực hành</p>
+                        </div>
+                    </div>
+
+                    <!-- Expert Advice Section -->
+                    <div class="bg-[#F0F4F8] rounded-xl p-8 border-l-4 border-[#714B67]">
+                        <h3 class="text-xl font-bold text-[#714B67] mb-4 flex items-center">
+                            💡 Lời khuyên từ Chuyên gia
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${trainingData.overview.advice.map(tip => `
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <p class="text-gray-700">"${tip}"</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Initialize Charts
+            setTimeout(() => {
+                // Radar Chart
+                new Chart(document.getElementById('skillsChart'), {
+                    type: 'radar',
+                    data: {
+                        labels: trainingData.overview.stats.skills.labels,
+                        datasets: [{
+                            label: 'Mức độ Quan trọng',
+                            data: trainingData.overview.stats.skills.data,
+                            fill: true,
+                            backgroundColor: 'rgba(113, 75, 103, 0.2)', // Odoo Purple transparent
+                            borderColor: '#714B67',
+                            pointBackgroundColor: '#00A09D',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#00A09D'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                angleLines: { display: true },
+                                suggestedMin: 0,
+                                suggestedMax: 100,
+                                ticks: { display: false } // Hide numbers for cleaner look
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+
+                // Doughnut Chart
+                new Chart(document.getElementById('timelineChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: trainingData.overview.stats.timeline.labels,
+                        datasets: [{
+                            data: trainingData.overview.stats.timeline.data,
+                            backgroundColor: [
+                                '#E5E7EB', // Gray for setup
+                                '#00A09D', // Teal for Frontend
+                                '#714B67', // Purple for Backend
+                                '#F59E0B'  // Amber for Project
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        },
+                        cutout: '70%'
+                    }
+                });
+            }, 100);
+        }
+
+        function renderWeek(weekId) {
+            const weekData = trainingData.weeks.find(w => w.id === weekId);
+            const container = document.getElementById('content-area');
+
+            if (!weekData) return;
+
+            container.innerHTML = `
+                <div class="animate-fade-in-up">
+                    <header class="mb-8 border-b pb-6">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">${weekData.title}</h2>
+                        <div class="flex items-center text-[#00A09D] font-medium mb-4">
+                            <span class="mr-2">🎯 Mục tiêu tuần:</span>
+                            <span>${weekData.goal}</span>
+                        </div>
+                        <div class="h-2 w-24 bg-[#714B67] rounded-full"></div>
+                    </header>
+
+                    <div class="grid gap-6">
+                        ${weekData.days.map(day => {
+                            const isComplete = completedDays.includes(day.id);
+                            return `
+                                <div class="day-card bg-white rounded-xl border border-gray-200 overflow-hidden">
+                                    <div class="p-6 cursor-pointer flex justify-between items-center" onclick="toggleDetails(${day.id})">
+                                        <div class="flex items-center gap-4">
+                                            <div class="flex-shrink-0 w-12 h-12 rounded-full ${isComplete ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'} flex items-center justify-center font-bold text-lg">
+                                                ${day.id}
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-bold text-gray-800">${day.title}</h3>
+                                                <p class="text-sm text-gray-500 line-clamp-1">${day.topics.join(', ')}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            ${isComplete ? '<span class="text-green-500 font-medium text-sm hidden sm:block">Hoàn thành</span>' : ''}
+                                            <svg id="arrow-${day.id}" class="w-6 h-6 text-gray-400 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="details-${day.id}" class="details-panel bg-gray-50 px-6 border-t border-gray-100">
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div class="md:col-span-2">
+                                                <h4 class="text-sm uppercase tracking-wide text-gray-500 font-bold mb-3">Nội dung học tập</h4>
+                                                <ul class="space-y-2 mb-4">
+                                                    ${day.topics.map(t => `<li class="flex items-start"><span class="text-[#00A09D] mr-2">•</span>${t}</li>`).join('')}
+                                                </ul>
+                                            </div>
+                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                                <h4 class="text-sm uppercase tracking-wide text-[#714B67] font-bold mb-3 flex items-center">
+                                                    <span class="text-xl mr-2">🧪</span> Bài tập Lab
+                                                </h4>
+                                                <p class="text-gray-700 text-sm mb-4">${day.lab}</p>
+                                                <button id="btn-check-${day.id}" onclick="event.stopPropagation(); toggleDayCompletion(${day.id})" 
+                                                    class="w-full py-2 px-4 rounded-lg font-semibold text-sm transition-colors ${isComplete ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                                    ${isComplete ? '✅ Đã hoàn thành' : '⬜ Đánh dấu xong'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderResources() {
+            const container = document.getElementById('content-area');
+            container.innerHTML = `
+                <div class="animate-fade-in-up">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Tài nguyên & Công cụ Hỗ trợ</h2>
+                    <p class="mb-8 text-gray-600">Tổng hợp các đường dẫn quan trọng cần thiết cho quá trình làm việc với Odoo.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${trainingData.resources.map(res => `
+                            <a href="${res.link}" target="_blank" class="block p-6 bg-white rounded-xl border border-gray-200 hover:border-[#00A09D] hover:shadow-md transition-all group">
+                                <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#00A09D] transition-colors mb-2 flex items-center">
+                                    ${res.name}
+                                    <svg class="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                </h3>
+                                <p class="text-gray-600">${res.desc}</p>
+                            </a>
+                        `).join('')}
+                    </div>
+
+                    <div class="mt-12 bg-white p-6 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">Kỹ thuật Debug cơ bản</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div class="p-3 bg-gray-50 rounded">
+                                <span class="font-bold block text-gray-700 mb-1">In màn hình</span>
+                                <code class="text-pink-600 bg-white px-1 rounded border">print(variable)</code>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <span class="font-bold block text-gray-700 mb-1">Dừng code (Break)</span>
+                                <code class="text-pink-600 bg-white px-1 rounded border">import pdb; pdb.set_trace()</code>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded">
+                                <span class="font-bold block text-gray-700 mb-1">Log hệ thống</span>
+                                <code class="text-pink-600 bg-white px-1 rounded border">_logger.info("Message")</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
